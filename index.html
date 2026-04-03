@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blended Reality Portrait Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: black;
+            color: #f4f4f5;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; } 
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        
+        .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+
+        .tab-active {
+            background-color: #27272a; /* zinc-800 */
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            z-index: 50;
+            width: 100%;
+            max-height: 240px;
+            overflow-y: auto;
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 0.75rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .mockup-container {
+            perspective: 1200px;
+        }
+
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+
+        .marquee-track {
+            display: inline-flex;
+            min-width: 200%;
+            animation: marquee 18s linear infinite;
+        }
+
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+    </style>
+</head>
+<body class="selection:bg-amber-500/30 overflow-x-hidden">
+    <div class="max-w-6xl mx-auto px-6 py-12 lg:py-20">
+        <!-- Header -->
+        <header class="mb-12 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div class="text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> Surreal Fusion Studio
+                </div>
+                <h1 class="text-4xl lg:text-6xl font-black tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-400 to-zinc-600">Blended Reality</h1>
+                <div class="mt-4 overflow-hidden rounded-full border border-amber-500/20 bg-zinc-950/80">
+                    <div class="marquee-track whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400">
+                        <span class="px-6">✨ Luxury Generator Bundle • Instant Download • Premium Images •</span>
+                        <span class="px-6">✨ Luxury Generator Bundle • Instant Download • Premium Images •</span>
+                        <span class="px-6">✨ Luxury Generator Bundle • Instant Download • Premium Images •</span>
+                        <span class="px-6">✨ Luxury Generator Bundle • Instant Download • Premium Images •</span>
+                    </div>
+                </div>
+                <p class="text-lg text-zinc-400 max-w-xl font-medium">Create surreal blended portrait prompts with double-exposure fusion, atmosphere, and dreamlike visual storytelling.</p>
+            </div>
+            <div class="hidden lg:block w-[214px]"></div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <!-- Controls Panel -->
+            <div class="lg:col-span-12 bg-zinc-950 border border-zinc-900 rounded-3xl p-6 lg:p-8 shadow-2xl h-fit">
+                <!-- Presets -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h3 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                            <i data-lucide="sparkles" class="w-3 h-3"></i> Presets
+                        </h3>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Tap to autofill</span>
+                    </div>
+                    <div id="style-family-buttons" class="flex gap-2 overflow-x-auto custom-scrollbar pb-3"></div>
+                    <div id="preset-buttons" class="flex gap-2 overflow-x-auto custom-scrollbar pb-2"></div>
+                </div>
+
+                <button id="randomize-btn" class="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 mb-8 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-300 font-bold text-sm hover:bg-zinc-800 transition-all transform hover:scale-[1.01] active:scale-95 group shadow-xl">
+                    <i data-lucide="dices" class="w-5 h-5 text-amber-500 group-hover:rotate-45 transition-transform"></i> Randomize Concept
+                </button>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 p-1 bg-zinc-900 rounded-2xl mb-8">
+                    <button data-tab="subject" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all tab-active">Subject</button>
+                    <button data-tab="style" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-zinc-500 hover:text-zinc-300">Fusion</button>
+                    <button data-tab="environment" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-zinc-500 hover:text-zinc-300">Finish</button>
+                </div>
+
+                <!-- Form Fields Container -->
+                <div id="fields-container" class="space-y-2">
+                    <!-- Fields will be dynamically injected here -->
+                </div>
+
+                <button id="generate-btn" class="w-full group mt-8 py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-400 text-black font-black uppercase tracking-widest transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(217,119,6,0.2)]">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
+                    <span>Generate Prompt</span>
+                </button>
+                <div id="error-message" class="hidden mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-400 text-xs font-medium"></div>
+
+                <!-- Prompt Display -->
+                <div id="prompt-card" class="hidden mt-6 p-6 bg-zinc-950 border border-zinc-800 rounded-3xl space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                                <i data-lucide="terminal" class="w-3 h-3"></i> Generated Prompt
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <button id="save-prompt-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                    <i data-lucide="save" class="w-3 h-3"></i> Save Prompt
+                                </button>
+                                <button id="copy-prompt-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copy Prompt
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                            <p id="prompt-text" class="text-xs text-zinc-400 font-mono italic leading-relaxed"></p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="generate-variations-btn" class="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition-all flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> 3 More Variations
+                        </button>
+                    </div>
+                    <div id="variations-card" class="hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                                <i data-lucide="wand-sparkles" class="w-3 h-3"></i> Prompt Variations
+                            </h4>
+                            <button id="copy-variations-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Variations
+                            </button>
+                        </div>
+                        <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                            <p id="variations-text" class="text-xs text-zinc-400 font-mono italic leading-relaxed whitespace-pre-line"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                                <i data-lucide="shield-ban" class="w-3 h-3"></i> Negative Prompt
+                            </h4>
+                            <button id="copy-negative-prompt-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Negative
+                            </button>
+                        </div>
+                        <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                            <p id="negative-prompt-text" class="text-xs text-zinc-400 font-mono italic leading-relaxed"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                                <i data-lucide="clapperboard" class="w-3 h-3"></i> Video Script
+                            </h4>
+                            <button id="copy-video-script-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Video Script
+                            </button>
+                        </div>
+                        <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                            <p id="video-script-text" class="text-xs text-zinc-400 font-mono leading-relaxed whitespace-pre-line"></p>
+                        </div>
+                    </div>
+
+                    <div class="border border-zinc-800 rounded-2xl overflow-hidden">
+                        <div class="px-4 py-3 bg-zinc-900/80 border-b border-zinc-800">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest"><i data-lucide="music-4" class="w-3 h-3"></i> Suno Campaign Studio</span>
+                                <button id="copy-suno-script-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copy Suno Script
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-black/40 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Song Length</label>
+                                    <select id="song-length-select" class="w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-zinc-200 outline-none focus:ring-2 focus:ring-amber-500/20">
+                                        <option value="jingle">Jingle</option>
+                                        <option value="30-second">30 Second Song</option>
+                                        <option value="1-minute">1 Minute Song</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Genre Freedom</label>
+                                    <input id="suno-genre-input" type="text" placeholder="Any genre, genre blend, or leave open" class="w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-zinc-300 outline-none focus:ring-2 focus:ring-amber-500/20">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Style Freedom</label>
+                                    <input id="suno-style-input" type="text" placeholder="Mood, vocal style, or leave open" class="w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-zinc-300 outline-none focus:ring-2 focus:ring-amber-500/20">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+                                    <div class="flex items-center justify-between mb-2 text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+                                        <span>Weirdness</span><span id="weirdness-value" class="text-amber-500">15%</span>
+                                    </div>
+                                    <input id="weirdness-range" type="range" min="0" max="100" value="15" class="w-full accent-amber-500">
+                                </div>
+                                <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+                                    <div class="flex items-center justify-between mb-2 text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+                                        <span>Style Influence</span><span id="style-influence-value" class="text-pink-400">90%</span>
+                                    </div>
+                                    <input id="style-influence-range" type="range" min="0" max="100" value="90" class="w-full accent-pink-400">
+                                </div>
+                                <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+                                    <div class="flex items-center justify-between mb-2 text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+                                        <span>Lyric Influence</span><span id="lyric-influence-value" class="text-cyan-400">70%</span>
+                                    </div>
+                                    <input id="lyric-influence-range" type="range" min="0" max="100" value="70" class="w-full accent-cyan-400">
+                                </div>
+                                <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+                                    <div class="flex items-center justify-between mb-2 text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+                                        <span>Audio Influence</span><span id="audio-influence-value" class="text-zinc-300">40%</span>
+                                    </div>
+                                    <input id="audio-influence-range" type="range" min="0" max="100" value="40" class="w-full accent-white">
+                                </div>
+                            </div>
+                            <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                                <p id="suno-script-text" class="text-xs text-zinc-400 font-mono leading-relaxed whitespace-pre-line"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
+                                <i data-lucide="megaphone" class="w-3 h-3"></i> Marketing Command Center
+                            </h4>
+                            <button id="copy-marketing-btn" class="text-[10px] font-bold text-zinc-500 hover:text-white flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Marketing Pack
+                            </button>
+                        </div>
+                        <div class="p-4 bg-black border border-zinc-900 rounded-xl">
+                            <p id="marketing-text" class="text-xs text-zinc-400 font-mono leading-relaxed whitespace-pre-line"></p>
+                        </div>
+                    </div>
+
+                    <div class="border border-zinc-800 rounded-2xl overflow-hidden">
+                        <button id="toggle-history-btn" class="w-full px-4 py-3 bg-zinc-900/80 hover:bg-zinc-900 text-left flex items-center justify-between">
+                            <span class="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-widest"><i data-lucide="history" class="w-3 h-3"></i> Prompt History</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-500" id="history-chevron"></i>
+                        </button>
+                        <div id="prompt-history-section" class="hidden p-4 bg-black/40 border-t border-zinc-800">
+                            <div id="prompt-history-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Mockup Studio Section -->
+        <div id="mockup-studio" class="hidden mt-12 bg-zinc-950 border border-zinc-900 rounded-3xl p-8 shadow-2xl overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h3 class="text-2xl font-black tracking-tight text-white flex items-center gap-3">
+                        <i data-lucide="monitor" class="text-amber-500"></i> Mockup Studio
+                    </h3>
+                    <p class="text-zinc-500 text-sm mt-1">Visualize your fusion art as a large-scale architectural feature.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button data-mockup="livingroom" class="mockup-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-black shadow-lg scale-105">
+                        <i data-lucide="layout" class="w-4 h-4"></i> Curved Sofa Mural
+                    </button>
+                    <button data-mockup="gallery" class="mockup-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-zinc-900 text-zinc-500 hover:bg-zinc-800">
+                        <i data-lucide="monitor" class="w-4 h-4"></i> Museum Gallery
+                    </button>
+                    <button data-mockup="tshirt" class="mockup-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-zinc-900 text-zinc-500 hover:bg-zinc-800">
+                        <i data-lucide="user" class="w-4 h-4"></i> Apparel Tee
+                    </button>
+                    <button data-mockup="canvas" class="mockup-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-zinc-900 text-zinc-500 hover:bg-zinc-800">
+                        <i data-lucide="maximize" class="w-4 h-4"></i> Studio Canvas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mockup Canvas -->
+            <div id="mockup-display" class="relative aspect-video rounded-3xl overflow-hidden bg-zinc-900 flex items-center justify-center transition-all duration-700 shadow-inner">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+
+        <!-- Gallery Section -->
+        <div id="gallery-section" class="hidden mt-20 border-t border-zinc-900 pt-20">
+            <h2 class="text-3xl font-black mb-2 text-white">Studio Gallery</h2>
+            <p class="text-zinc-500 mb-8">Cloud history of your past blended portraits.</p>
+            <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Gallery items will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from 'firebase/app';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, doc, deleteDoc } from 'firebase/firestore';
+
+        // --- Configuration & Constants ---
+        let apiKey = '';
+        try { apiKey = localStorage.getItem('geminiApiKey') || ''; } catch (e) { apiKey = ''; }
+
+        function getModelUrl() {
+            return `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+        }
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
+        const auth = app ? getAuth(app) : null;
+        const db = app ? getFirestore(app) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const CATEGORIES = {
+            subject: ['custom_text', 'subject_type', 'ethnicity', 'mood', 'camera'],
+            style: ['fusion_theme', 'main_environment', 'atmospheric_elements', 'visual_motif'],
+            environment: ['blend_behavior', 'fusion_placement', 'integration_strength', 'blend_intensity', 'color_story', 'art_finish', 'lighting']
+        };
+
+        const FIELDS = [
+            { type: "text", label: "Custom Theme or Title", key: "custom_text", placeholder: "Enter concept word, vibe, or headline", icon: "sparkles" },
+            { type: "select", label: "Subject Type", key: "subject_type", icon: "user", options: ["None", "Abstract muse", "Angelic figure", "Celestial woman", "Cinematic heroine", "Dream traveler", "Ethereal being", "Feminine silhouette", "Fine-art portrait subject", "Floating profile muse", "Forest guardian", "Goddess silhouette", "Human silhouette", "Luminous oracle", "Moonlit figure", "Mystic feminine figure", "Nature-bound muse", "Otherworldly profile", "Phantom heroine", "Poetic face study", "Portrait silhouette", "Powerful woman", "Sacred dreamer", "Sacred feminine form", "Shadow muse", "Side-profile muse", "Soul figure", "Spirit figure", "Spirit silhouette", "Surreal beauty subject", "Surreal profile study", "Symbolic portrait figure", "Timeless feminine icon", "Translucent muse", "Visionary muse", "Visionary portrait", "Wild mystic", "Wistful apparition", "Woman of the elements", "Woven silhouette"] },
+            { type: "multiselect", label: "Ethnicity", key: "ethnicity", icon: "user", options: ["None", "Abstract Human", "African American", "Afro-Caribbean", "Afro-Latina", "Amazonian", "Arab", "Asian American", "Brazilian", "Caribbean", "Celestial Being", "Central Asian", "East African", "East Asian", "Ethiopian", "European", "Futuristic Ethereal", "Indigenous", "Latina", "Mediterranean", "Melanesian", "Middle Eastern", "Mixed Heritage", "Monochrome Sculpted", "Native American", "North African", "Pacific Islander", "Persian", "Polynesian", "Romani", "Scandinavian", "South African", "South Asian", "Southeast Asian", "Subsaharan African", "Taino", "Turkish", "West African", "West Indian", "White American"] },
+            { type: "select", label: "Facial Expression", key: "mood", icon: "smile", options: ["None", "Bold & Defiant", "Calm & Grounded", "Confident & Magnetic", "Dreamy & Ethereal", "Ecstatic & Radiant", "Elegant & Reserved", "Ethereal & Distant", "Fierce & Unbothered", "Flirtatious & Playful", "Focused & Intentional", "Gentle & Hopeful", "Intense & Piercing", "Joyful & Open", "Melancholic & Haunting", "Mischievous & Chic", "Mysterious & Alluring", "Pensive & Reflective", "Powerful & Commanding", "Radiant & Warm", "Regal & Composed", "Relaxed & Easygoing", "Romantic & Soft", "Seductive & Smoldering", "Self-Assured & Cool", "Serene & Zen", "Solemn & Sacred", "Stoic & Powerful", "Striking & Dramatic", "Sweet & Tender", "Thoughtful & Quiet", "Triumphant & Uplifted", "Vulnerable & Honest", "Wild & Untamed", "Wise & Centered", "Yearning & Nostalgic", "Youthful & Bright", "Zenlike & Poised", "Zesty & Spirited", "Zoned In"] },
+            { type: "select", label: "Camera Angle", key: "camera", icon: "camera", options: ["None", "85mm portrait", "Aerial portrait", "Beauty close crop", "Centered close-up", "Chest-up portrait", "Close profile crop", "Cropped bust portrait", "Diagonal profile shot", "Distant silhouette", "Extreme macro beauty crop", "Extreme side profile", "Eye-level cinematic portrait", "Front-facing portrait", "Full-body surreal framing", "Half-profile close-up", "Intimate eye-level portrait", "Intimate side portrait", "Low angle power portrait", "Low-front portrait", "Magazine cover framing", "Medium bust framing", "Over-the-shoulder portrait", "Panoramic silhouette shot", "Poster-style silhouette frame", "Profile silhouette", "Shoulder-up portrait", "Soft side glance portrait", "Soft-focus close portrait", "Straight-on beauty shot", "Tall portrait framing", "Three-quarter portrait", "Tight editorial crop", "Top-down portrait study", "Ultra-wide silhouette scene", "Upper-body profile", "Vertical poster framing", "Waist-up portrait", "Wide cinematic portrait", "Zoomed glam close-up"] },
+            { type: "multiselect", label: "Fusion Theme", key: "fusion_theme", icon: "layers", options: ["None", "Abstract ink", "Animals", "Architecture", "Birds", "Branches", "Butterflies", "Butterfly dust", "Celestial moon", "Clouds", "Cosmic sky", "Crystals", "Desert", "Fire", "Floral bloom", "Fog", "Forest", "Galaxies", "Glass", "Light trails", "Lightning", "Moonlight", "Mountains", "Music", "Ocean", "Rain", "River", "Roots", "Rose petals", "Sand", "Smoke", "Stairs", "Storm sky", "Sun flare", "Sunset", "Tree branches", "Water droplets", "Waterfalls", "Waves", "Wilderness"] },
+            { type: "multiselect", label: "Main Environment", key: "main_environment", icon: "image", options: ["None", "Ancient ruins", "Aurora sky", "Autumn forest", "Black void", "Botanical glasshouse", "Canyon overlook", "Cathedral ruins", "City skyline", "Cloud kingdom", "Crystal cavern", "Desert horizon", "Dream lake", "Emerald forest", "Fantasy valley", "Floating islands", "Foggy woods", "Frozen lake", "Garden bloomscape", "Golden savannah", "Hidden waterfall", "Icy shoreline", "Jungle canopy", "Mirror lake", "Misty marsh", "Moonlit ocean", "Mountain ridge", "Mystic river", "Neon dream city", "Rain-soaked coast", "Rose garden", "Sacred temple", "Soft dawn beach", "Star field", "Storm coast", "Sunset beach", "Twilight meadow", "Volcanic terrain", "Waterfall cliff", "White studio haze"] },
+            { type: "multiselect", label: "Atmospheric Elements", key: "atmospheric_elements", icon: "sparkles", options: ["None", "Aurora ribbons", "Bloom haze", "Branch shadows", "Butterflies", "Cloud wisps", "Crystal dust", "Dissolving particles", "Drifting feathers", "Dripping water", "Ember sparks", "Falling leaves", "Floating ash", "Floating birds", "Floating embers", "Floating lanterns", "Floating petals", "Fog", "Glass droplets", "Glowing dust", "Golden pollen", "Haze", "Light leaks", "Lightning sparks", "Mist", "Moon glow", "Moon haze", "Ocean spray", "Rain droplets", "Rippling reflections", "Rose petals", "Smoke", "Snowfall", "Soft bokeh", "Soft rain", "Spark mist", "Star shimmer", "Sun flare", "Sunset glow", "Water droplets"] },
+            { type: "multiselect", label: "Visual Motif", key: "visual_motif", icon: "aperture", options: ["None", "Aurora veil", "Birds in flight", "Branch halo", "Butterfly burst", "Butterfly trail", "Celestial cracks", "Cracked sky", "Dissolving silhouette", "Double sun reflection", "Floating crown of trees", "Floating staircase", "Forest crown", "Glass branch lattice", "Glass face overlay", "Horizon through face", "Lake within silhouette", "Landscape in profile", "Leaf halo", "Melting horizon", "Moon behind silhouette", "Moonlit profile window", "Mountain face merge", "Petal veil", "River through body", "Roots through skin", "Silhouette window", "Skyline silhouette", "Smoke halo", "Split-face fusion", "Stairway silhouette", "Sunset reflection", "Tree branches through face", "Tree roots in silhouette", "Veil of water", "Veins of light", "Violin-body fusion", "Waterfall through hood", "Waterline face merge", "Wildlife silhouette"] },
+            { type: "multiselect", label: "Blend Behavior", key: "blend_behavior", icon: "git-merge", options: ["None", "Anatomy replaced by environment", "Biological fusion", "Contour-dissolved fusion", "Contour-following merge", "Deep silhouette interlock", "Diffused under-skin transition", "Dissolving into particles", "Dreamlike overlap", "Embedded scenery fusion", "Emerging from within", "Environment absorbed into skin", "Environment woven through silhouette", "Ethereal anatomy merge", "Fog-threaded integration", "Interior landscape merge", "Layered silhouette fusion", "Liquid translucence", "Memory-wash blending", "Morphing surreal collage", "Organic double exposure", "Partially transparent anatomy", "Rooted through skin", "Seamless contour merge", "Silhouette echo layering", "Skin-to-scenery transition", "Soft anatomical diffusion", "Softly embedded", "Submerged transparency", "Subtle translucence", "Surreal bleed merge", "Threaded environmental fusion", "Transparent double exposure", "Veinlike integration", "Visual bleed-through", "Weather-washed blending", "Whisper-soft layering", "Woven translucency", "Yielding contour dissolve", "Zero-edge fusion"] },
+            { type: "select", label: "Fusion Placement", key: "fusion_placement", icon: "move", options: ["None", "Across the cheeks and temples", "Across the crown and silhouette", "Across the full body silhouette", "Across the full bust", "Across the hairline and temples", "Across the profile edge and shoulder", "Across the shoulders and collarbone", "Across the torso opening", "Along the jawline and neck", "Around the eyes and cheekbones", "Beneath the eyes and along the nose bridge", "Beneath the skin surface", "Embedded from scalp to bust", "Embedded through the entire form", "Emerging from the scalp", "Face and neck", "Face only", "Flowing through the chest cavity", "Flowing through the neckline and chest", "From forehead to collarbone", "Inside the facial silhouette", "Inside the torso silhouette", "Layered through the forehead and jaw", "One side of the face", "Profile silhouette", "Radiating from the cheekbones outward", "Running through the profile edge", "Split-face fusion", "Threaded through the bust silhouette", "Through the body silhouette", "Through the eyes and browline", "Through the face contour and neck", "Through the interior body cavity", "Within the crown and hairline", "Within the face and upper torso", "Within the negative space", "Within the side-profile silhouette", "Wrapped across the chest and shoulder", "Wrapped through the interior silhouette"] },
+            { type: "select", label: "Integration Strength", key: "integration_strength", icon: "sliders-horizontal", options: ["None", "Airy blend", "Atmosphere-led merge", "Balanced merge", "Barely-there blend", "Bold transformation", "Complete metamorphosis", "Deep fusion", "Dominant environment merge", "Edge-to-edge fusion", "Environment-dominant", "Extreme transformation", "Featherlight blend", "Full transformation", "Gentle merge", "Heavy blend", "High fusion", "Immersive surreal merge", "Layered transformation", "Light fusion", "Low fusion", "Maximum fusion", "Medium blend", "Moderate transformation", "Near-total transformation", "Profound blend", "Pronounced blend", "Silhouette-dominant", "Soft fusion", "Strong transformation", "Subtle blend", "Subtle transformation", "Total immersion", "Transformative overlay", "Ultra-fused", "Visible merge", "Weightless fusion", "Whisper blend", "Whisper-soft fusion", "Whole-form integration"] },
+            { type: "select", label: "Blend Intensity", key: "blend_intensity", icon: "blend", options: ["None", "Airy", "All-in", "Atmospheric", "Balanced", "Bold", "Deep", "Dense", "Dream haze", "Dream-saturated", "Extra heavy", "Extreme", "Feathered", "Featherlight", "Full force", "Full surreal", "Heavy", "High", "High impact", "Hyper surreal", "Immersive", "Light touch", "Low", "Maximum", "Medium", "Medium-high", "Medium-low", "Misty", "Moderate", "Rich", "Saturated", "Soft", "Soft glow", "Subtle", "Super subtle", "Ultra heavy", "Ultra-soft", "Vapor-soft", "Very high", "Very low"] },
+            { type: "multiselect", label: "Color Story", key: "color_story", icon: "palette", options: ["None", "Amber and smoke", "Amethyst and obsidian", "Aqua and coral", "Azure and amber", "Black and gold", "Black and ivory", "Blue and silver", "Blush and gold", "Bronze and ivory", "Charcoal and copper", "Cobalt and flame", "Copper and turquoise", "Crimson and charcoal", "Dusty rose and smoke", "Emerald and moss", "Forest green and gold", "Gold and bronze", "Icy blue and pearl", "Indigo and gold", "Ivory and bronze", "Jade and black", "Lavender and dusk", "Magenta and midnight", "Monochrome with red accent", "Moonlight blue and gray", "Peach and teal", "Rose gold and cream", "Ruby and smoke", "Rust and teal", "Sage and stone", "Silver and dusk", "Sunset orange and deep blue", "Teal and copper", "Violet and gold", "Warm sepia and teal", "White and shadow", "Wine and ember", "Yellow ochre and charcoal", "Zinc and pearl"] },
+            { type: "multiselect", label: "Art Finish", key: "art_finish", icon: "brush", options: ["None", "Atmospheric fantasy editorial", "Atmospheric symbolic realism", "Cinematic dream realism", "Cinematic symbolic surrealism", "Collector-grade fantasy art", "Dark fantasy surrealism", "Dark poetic surrealism", "Deluxe dream portraiture", "Dream-editorial hybrid", "Dreamy cinematic", "Editorial fine-art surrealism", "Ethereal surrealism", "Fine-art fantasy portrait", "Fine-art symbolic realism", "Gallery-style surreal portrait", "Glossy symbolic fusion", "High-detail fantasy portrait", "Hyper-detailed dream portrait", "Illustrative surreal collage", "Luminous double exposure", "Lush painterly symbolism", "Lyrical fantasy realism", "Moody editorial surrealism", "Moody symbolic portraiture", "Museum-grade fantasy portrait", "Mythic surreal portrait", "Narrative surreal portraiture", "Painterly dream fusion", "Painterly surreal realism", "Poetic visual storytelling", "Polished fantasy realism", "Romantic surreal portraiture", "Soft cinematic surrealism", "Soft symbolic collage", "Surreal fine art", "Ultra-luminous fantasy art", "Velvet surreal realism", "Whimsical dark surrealism", "Zero-edge fine art"] },
+            { type: "multiselect", label: "Lighting & Atmosphere", key: "lighting", icon: "sun", options: ["None", "Amber twilight haze", "Atmospheric backglow", "Aurora glow", "Backlit halo", "Blue hour atmosphere", "Celestial rim light", "Cloud-diffused light", "Crisp sunrise glow", "Darkened halo light", "Deep shadow glow", "Diffuse overcast shimmer", "Dreamlit reflection", "Dusklight shimmer", "Eclipse backlight", "Fog-softened light", "Glassy rim light", "Golden hour glow", "Heavenly overglow", "High-contrast dusk", "Horizon backlight", "Lantern-lit haze", "Low-key cinematic haze", "Low-sun reflection", "Luminous mist light", "Moody window light", "Moonlit radiance", "Muted storm glow", "Pearlescent fog glow", "Radiant horizon light", "Reflective water light", "Silver dusk glow", "Soft moon haze", "Soft sunset light", "Stormy cinematic light", "Sunbeam fracture", "Twilight silhouette glow", "Underlit dream glow", "Volumetric light rays", "Warm ember light"] }
+        ];
+
+        const AESTHETIC_PROFILES = [{ name: "Sunset Branch Muse", family: "Transparent Ocean Face", custom_text: "Sunset Within", subject_type: "Surreal beauty subject", ethnicity: ["African American"], mood: "Mysterious & Alluring", camera: "Tight editorial crop", fusion_theme: ["Sunset", "Tree branches", "Water droplets"], main_environment: ["Sunset beach"], atmospheric_elements: ["Rain droplets", "Mist"], visual_motif: ["Sunset reflection", "Tree branches through face"], blend_behavior: ["Transparent double exposure", "Contour-following merge"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Sunset orange and deep blue"], art_finish: ["Luminous double exposure", "Surreal fine art"], lighting: ["Soft sunset light"] },
+            { name: "Red Moon Lake", family: "Silhouette Landscape", custom_text: "Red Moon Echo", subject_type: "Fine-art portrait subject", ethnicity: ["Abstract Human"], mood: "Stoic & Powerful", camera: "Centered close-up", fusion_theme: ["Mountains", "River", "Tree branches"], main_environment: ["Mirror lake", "Mountain ridge"], atmospheric_elements: ["Mist"], visual_motif: ["Moon behind silhouette", "Landscape in profile"], blend_behavior: ["Layered silhouette fusion", "Dreamlike overlap"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Monochrome with red accent"], art_finish: ["Fine-art fantasy portrait", "Poetic visual storytelling"], lighting: ["Moonlit radiance"] },
+            { name: "Butterfly Eclipse", family: "Butterfly Dissolve", custom_text: "Eclipse Drift", subject_type: "Side-profile muse", ethnicity: ["African American"], mood: "Elegant & Reserved", camera: "Profile silhouette", fusion_theme: ["Butterflies", "Clouds"], main_environment: ["Storm coast"], atmospheric_elements: ["Butterflies", "Dissolving particles"], visual_motif: ["Butterfly burst", "Dissolving silhouette"], blend_behavior: ["Dissolving into particles", "Environment woven through silhouette"], fusion_placement: "One side of the face", integration_strength: "Full transformation", color_story: ["Black and gold"], art_finish: ["Dreamy cinematic", "Moody editorial surrealism"], lighting: ["Stormy cinematic light"] },
+            { name: "Savannah Soul", family: "Symbolic Color Collage", custom_text: "Wild Horizon", subject_type: "Human silhouette", ethnicity: ["African American"], mood: "Calm & Grounded", camera: "Profile silhouette", fusion_theme: ["Animals", "Sunset", "Wilderness"], main_environment: ["Golden savannah"], atmospheric_elements: ["Light leaks"], visual_motif: ["Wildlife silhouette", "Landscape in profile"], blend_behavior: ["Anatomy replaced by environment", "Embedded scenery fusion"], fusion_placement: "Through the body silhouette", integration_strength: "Environment-dominant", color_story: ["Gold and bronze"], art_finish: ["Surreal fine art", "Poetic visual storytelling"], lighting: ["Golden hour glow"] },
+            { name: "Violin River Dream", family: "Fantasy Nature Fusion", custom_text: "Resonant River", subject_type: "Mystic feminine figure", ethnicity: ["African American"], mood: "Pensive & Reflective", camera: "Wide cinematic portrait", fusion_theme: ["Forest", "Music", "River"], main_environment: ["Mystic river", "Fantasy valley"], atmospheric_elements: ["Butterflies", "Mist"], visual_motif: ["Floating staircase", "Violin-body fusion"], blend_behavior: ["Morphing surreal collage", "Embedded scenery fusion"], fusion_placement: "Across the full body silhouette", integration_strength: "Full transformation", color_story: ["Rust and teal"], art_finish: ["Fine-art fantasy portrait", "Painterly surreal realism"], lighting: ["Fog-softened light"] },
+            { name: "Waterfall Hood", family: "Fantasy Nature Fusion", custom_text: "Cascade Spirit", subject_type: "Dream traveler", ethnicity: ["European"], mood: "Thoughtful & Quiet", camera: "Three-quarter portrait", fusion_theme: ["Mountains", "Waterfalls"], main_environment: ["Waterfall cliff", "Fantasy valley"], atmospheric_elements: ["Mist", "Water droplets"], visual_motif: ["Waterfall through hood", "Veil of water"], blend_behavior: ["Embedded scenery fusion", "Transparent double exposure"], fusion_placement: "Across the full bust", integration_strength: "Heavy blend", color_story: ["Blue and silver"], art_finish: ["High-detail fantasy portrait", "Dreamy cinematic"], lighting: ["Cloud-diffused light"] },
+            { name: "Petal Smoke Oracle", family: "Fantasy Nature Fusion", custom_text: "Petal Veil", subject_type: "Poetic face study", ethnicity: ["Latina"], mood: "Dreamy & Ethereal", camera: "Front-facing portrait", fusion_theme: ["Rose petals", "Smoke"], main_environment: ["White studio haze"], atmospheric_elements: ["Rose petals", "Smoke", "Soft bokeh"], visual_motif: ["Split-face fusion"], blend_behavior: ["Softly embedded", "Dreamlike overlap"], fusion_placement: "Face and neck", integration_strength: "Medium blend", color_story: ["Rose gold and cream"], art_finish: ["Soft symbolic collage", "Moody editorial surrealism"], lighting: ["Backlit halo"] },
+            { name: "Ocean Glass Muse", family: "Transparent Ocean Face", custom_text: "Glass Tide", subject_type: "Celestial woman", ethnicity: ["Mixed Heritage"], mood: "Serene & Zen", camera: "Centered close-up", fusion_theme: ["Ocean", "Water droplets", "Waves"], main_environment: ["Moonlit ocean"], atmospheric_elements: ["Ocean spray", "Water droplets"], visual_motif: ["Glass face overlay", "Sunset reflection"], blend_behavior: ["Partially transparent anatomy", "Transparent double exposure"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Icy blue and pearl"], art_finish: ["Luminous double exposure", "Surreal fine art"], lighting: ["Blue hour atmosphere"] },
+            { name: "Branch Crown", family: "Fantasy Nature Fusion", custom_text: "Rooted Dream", subject_type: "Forest guardian", ethnicity: ["African American"], mood: "Wise & Centered", camera: "Three-quarter portrait", fusion_theme: ["Forest", "Tree branches"], main_environment: ["Foggy woods"], atmospheric_elements: ["Fog", "Falling leaves"], visual_motif: ["Forest crown", "Tree branches through face"], blend_behavior: ["Environment woven through silhouette", "Emerging from within"], fusion_placement: "Face and neck", integration_strength: "Heavy blend", color_story: ["Emerald and moss"], art_finish: ["Ethereal surrealism", "Surreal fine art"], lighting: ["Fog-softened light"] },
+            { name: "Crimson Mirage", family: "Symbolic Color Collage", custom_text: "Crimson Haze", subject_type: "Powerful woman", ethnicity: ["South Asian"], mood: "Powerful & Commanding", camera: "Magazine cover framing", fusion_theme: ["Clouds", "Fire", "Smoke"], main_environment: ["Desert horizon"], atmospheric_elements: ["Smoke", "Sun flare"], visual_motif: ["Melting horizon"], blend_behavior: ["Dreamlike overlap", "Seamless contour merge"], fusion_placement: "Across the full bust", integration_strength: "Medium blend", color_story: ["Crimson and charcoal"], art_finish: ["Dreamy cinematic", "Moody editorial surrealism"], lighting: ["High-contrast dusk"] },
+            { name: "Aurora Figure", family: "Silhouette Landscape", custom_text: "Aurora Silence", subject_type: "Spirit figure", ethnicity: ["Abstract Human"], mood: "Ethereal & Distant", camera: "Distant silhouette", fusion_theme: ["Clouds", "Cosmic sky"], main_environment: ["Aurora sky", "Star field"], atmospheric_elements: ["Star shimmer", "Cloud wisps"], visual_motif: ["Silhouette window"], blend_behavior: ["Partially transparent anatomy", "Layered silhouette fusion"], fusion_placement: "Across the full body silhouette", integration_strength: "Silhouette-dominant", color_story: ["Lavender and dusk"], art_finish: ["Luminous double exposure", "Ethereal surrealism"], lighting: ["Aurora glow"] },
+            { name: "Monarch Drift", family: "Butterfly Dissolve", custom_text: "Golden Flight", subject_type: "Feminine silhouette", ethnicity: ["African American"], mood: "Gentle & Hopeful", camera: "Profile silhouette", fusion_theme: ["Butterflies", "Sunset"], main_environment: ["Twilight meadow"], atmospheric_elements: ["Butterflies", "Glowing dust"], visual_motif: ["Butterfly burst", "Dissolving silhouette"], blend_behavior: ["Dissolving into particles", "Transparent double exposure"], fusion_placement: "One side of the face", integration_strength: "Full transformation", color_story: ["Black and gold"], art_finish: ["Dreamy cinematic", "Surreal fine art"], lighting: ["Soft sunset light"] },
+            { name: "River Within", family: "Fantasy Nature Fusion", custom_text: "Inner Current", subject_type: "Sacred feminine form", ethnicity: ["African American"], mood: "Calm & Grounded", camera: "Wide cinematic portrait", fusion_theme: ["River", "Waterfalls"], main_environment: ["Mystic river", "Waterfall cliff"], atmospheric_elements: ["Mist", "Water droplets"], visual_motif: ["River through body", "Floating staircase"], blend_behavior: ["Anatomy replaced by environment", "Embedded scenery fusion"], fusion_placement: "Embedded through the entire form", integration_strength: "Environment-dominant", color_story: ["Teal and copper"], art_finish: ["Fine-art fantasy portrait", "Poetic visual storytelling"], lighting: ["Luminous mist light"] },
+            { name: "Smoky Bloom", family: "Fantasy Nature Fusion", custom_text: "Bloom After Dark", subject_type: "Surreal beauty subject", ethnicity: ["Afro-Latina"], mood: "Mysterious & Alluring", camera: "Tight editorial crop", fusion_theme: ["Floral bloom", "Smoke"], main_environment: ["Garden bloomscape"], atmospheric_elements: ["Smoke", "Floating petals", "Soft bokeh"], visual_motif: ["Split-face fusion"], blend_behavior: ["Softly embedded", "Contour-following merge"], fusion_placement: "Face and neck", integration_strength: "Medium blend", color_story: ["Amber and smoke"], art_finish: ["Soft symbolic collage", "Moody editorial surrealism"], lighting: ["Backlit halo"] },
+            { name: "Mountain Veil", family: "Fantasy Nature Fusion", custom_text: "High Silence", subject_type: "Dream traveler", ethnicity: ["Middle Eastern"], mood: "Thoughtful & Quiet", camera: "Over-the-shoulder portrait", fusion_theme: ["Clouds", "Mountains", "Waterfalls"], main_environment: ["Mountain ridge", "Waterfall cliff"], atmospheric_elements: ["Mist", "Cloud wisps"], visual_motif: ["Mountain face merge", "Veil of water"], blend_behavior: ["Embedded scenery fusion", "Seamless contour merge"], fusion_placement: "Face and neck", integration_strength: "Heavy blend", color_story: ["Moonlight blue and gray"], art_finish: ["Painterly surreal realism", "Dreamy cinematic"], lighting: ["Cloud-diffused light"] },
+            { name: "Petal Storm", family: "Fantasy Nature Fusion", custom_text: "Storm of Petals", subject_type: "Poetic face study", ethnicity: ["East Asian"], mood: "Romantic & Soft", camera: "Centered close-up", fusion_theme: ["Floral bloom", "Rose petals", "Storm sky"], main_environment: ["Twilight meadow"], atmospheric_elements: ["Rose petals", "Fog"], visual_motif: ["Cracked sky"], blend_behavior: ["Dreamlike overlap", "Layered silhouette fusion"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Rose gold and cream"], art_finish: ["Ethereal surrealism", "Surreal fine art"], lighting: ["Stormy cinematic light"] },
+            { name: "Canyon Spirit", family: "Silhouette Landscape", custom_text: "Earth Echo", subject_type: "Spirit figure", ethnicity: ["Indigenous"], mood: "Solemn & Sacred", camera: "Profile silhouette", fusion_theme: ["Desert", "Mountains", "Wilderness"], main_environment: ["Canyon overlook"], atmospheric_elements: ["Floating ash"], visual_motif: ["Landscape in profile"], blend_behavior: ["Environment woven through silhouette", "Embedded scenery fusion"], fusion_placement: "Through the body silhouette", integration_strength: "Environment-dominant", color_story: ["Bronze and ivory"], art_finish: ["Surreal fine art", "Poetic visual storytelling"], lighting: ["Crisp sunrise glow"] },
+            { name: "Starborn Muse", family: "Silhouette Landscape", custom_text: "Starborn Whisper", subject_type: "Angelic figure", ethnicity: ["Celestial Being"], mood: "Gentle & Hopeful", camera: "Magazine cover framing", fusion_theme: ["Clouds", "Cosmic sky", "Light trails"], main_environment: ["Cloud kingdom", "Star field"], atmospheric_elements: ["Star shimmer", "Glowing dust"], visual_motif: ["Moon behind silhouette"], blend_behavior: ["Partially transparent anatomy", "Dreamlike overlap"], fusion_placement: "Across the full bust", integration_strength: "Medium blend", color_story: ["Blue and silver"], art_finish: ["Luminous double exposure", "Ethereal surrealism"], lighting: ["Aurora glow"] },
+            { name: "Rain Branch Portrait", family: "Transparent Ocean Face", custom_text: "After Rain", subject_type: "Fine-art portrait subject", ethnicity: ["African American"], mood: "Pensive & Reflective", camera: "Front-facing portrait", fusion_theme: ["Rain", "Tree branches", "Water droplets"], main_environment: ["Rain-soaked coast"], atmospheric_elements: ["Rain droplets", "Mist"], visual_motif: ["Tree branches through face", "Glass face overlay"], blend_behavior: ["Transparent double exposure", "Contour-following merge"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Blue and silver"], art_finish: ["Luminous double exposure", "Dreamy cinematic"], lighting: ["Blue hour atmosphere"] },
+            { name: "Ocean Hood Reverie", family: "Fantasy Nature Fusion", custom_text: "Hidden Cascades", subject_type: "Dream traveler", ethnicity: ["European"], mood: "Dreamy & Ethereal", camera: "Three-quarter portrait", fusion_theme: ["Ocean", "Waterfalls", "Wilderness"], main_environment: ["Icy shoreline", "Waterfall cliff"], atmospheric_elements: ["Mist", "Water droplets"], visual_motif: ["Waterfall through hood"], blend_behavior: ["Embedded scenery fusion", "Environment woven through silhouette"], fusion_placement: "Across the full bust", integration_strength: "Heavy blend", color_story: ["Icy blue and pearl"], art_finish: ["High-detail fantasy portrait", "Painterly surreal realism"], lighting: ["Cloud-diffused light"] },
+            { name: "Butterfly Noir", family: "Butterfly Dissolve", custom_text: "Noir Chrysalis", subject_type: "Side-profile muse", ethnicity: ["African American"], mood: "Elegant & Reserved", camera: "Profile silhouette", fusion_theme: ["Butterflies", "Fog", "Smoke"], main_environment: ["Black void"], atmospheric_elements: ["Butterflies", "Fog", "Smoke"], visual_motif: ["Butterfly burst", "Dissolving silhouette"], blend_behavior: ["Dissolving into particles", "Softly embedded"], fusion_placement: "One side of the face", integration_strength: "Full transformation", color_story: ["Black and gold"], art_finish: ["Moody editorial surrealism", "Surreal fine art"], lighting: ["High-contrast dusk"] },
+            { name: "Floral Halo", family: "Fantasy Nature Fusion", custom_text: "Botanic Light", subject_type: "Celestial woman", ethnicity: ["Latina"], mood: "Radiant & Warm", camera: "Centered close-up", fusion_theme: ["Floral bloom", "Light trails"], main_environment: ["Garden bloomscape"], atmospheric_elements: ["Floating petals", "Sun flare"], visual_motif: ["Leaf halo"], blend_behavior: ["Contour-following merge", "Softly embedded"], fusion_placement: "Face and neck", integration_strength: "Medium blend", color_story: ["Gold and bronze"], art_finish: ["Fine-art fantasy portrait", "Dreamy cinematic"], lighting: ["Golden hour glow"] },
+            { name: "Moon Branch Reverie", family: "Fantasy Nature Fusion", custom_text: "Moonroot", subject_type: "Mystic feminine figure", ethnicity: ["African American"], mood: "Serene & Zen", camera: "Over-the-shoulder portrait", fusion_theme: ["Clouds", "Fog", "Tree branches"], main_environment: ["Foggy woods", "Moonlit ocean"], atmospheric_elements: ["Fog", "Moon haze"], visual_motif: ["Tree branches through face", "Moon behind silhouette"], blend_behavior: ["Emerging from within", "Seamless contour merge"], fusion_placement: "Face and neck", integration_strength: "Heavy blend", color_story: ["Moonlight blue and gray"], art_finish: ["Ethereal surrealism", "Poetic visual storytelling"], lighting: ["Moonlit radiance"] },
+            { name: "Volcanic Drift", family: "Silhouette Landscape", custom_text: "Fire Below", subject_type: "Powerful woman", ethnicity: ["African American"], mood: "Striking & Dramatic", camera: "Low angle power portrait", fusion_theme: ["Fire", "Storm sky", "Wilderness"], main_environment: ["Volcanic terrain"], atmospheric_elements: ["Ember sparks", "Smoke"], visual_motif: ["Cracked sky"], blend_behavior: ["Environment woven through silhouette", "Dreamlike overlap"], fusion_placement: "Across the full bust", integration_strength: "Heavy blend", color_story: ["Amber and smoke"], art_finish: ["Moody editorial surrealism", "Surreal fine art"], lighting: ["Stormy cinematic light"] },
+            { name: "Mirror Lake Oracle", family: "Transparent Ocean Face", custom_text: "Reflection Spell", subject_type: "Sacred feminine form", ethnicity: ["African American"], mood: "Pensive & Reflective", camera: "Centered close-up", fusion_theme: ["Mountains", "River", "Sunset"], main_environment: ["Mirror lake"], atmospheric_elements: ["Mist", "Light leaks"], visual_motif: ["Double sun reflection", "Landscape in profile"], blend_behavior: ["Transparent double exposure", "Layered silhouette fusion"], fusion_placement: "Face only", integration_strength: "Heavy blend", color_story: ["Teal and copper"], art_finish: ["Luminous double exposure", "Poetic visual storytelling"], lighting: ["Golden hour glow"] }
+        ];
+
+        // --- State ---
+        let currentTab = 'subject';
+        let formData = {};
+        let lockedFields = {};
+        FIELDS.forEach(f => {
+            formData[f.key] = f.type === 'multiselect' ? [] : '';
+            if (f.type !== 'text') formData[`custom_${f.key}`] = '';
+            lockedFields[f.key] = false;
+        });
+        let user = null;
+        let generatedImageUrl = null;
+        let generatedPrompt = "";
+        let generatedNegativePrompt = "";
+        let generatedVariations = "";
+        let generatedVideoScript = "";
+        let generatedSunoScript = "";
+        let generatedMarketingPack = "";
+        let activeStyleFamily = "All";
+        let promptHistory = [];
+
+        // --- DOM Elements ---
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+        const apiKeyStatus = document.getElementById('api-key-status');
+        const fieldsContainer = document.getElementById('fields-container');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const presetButtons = document.getElementById('preset-buttons');
+        const styleFamilyButtons = document.getElementById('style-family-buttons');
+        const generateBtn = document.getElementById('generate-btn');
+        const resultImg = document.getElementById('result-img');
+        const placeholder = document.getElementById('placeholder');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const resultActions = document.getElementById('result-actions');
+        const promptCard = document.getElementById('prompt-card');
+        const promptText = document.getElementById('prompt-text');
+        const copyPromptBtn = document.getElementById('copy-prompt-btn');
+        const copyNegativePromptBtn = document.getElementById('copy-negative-prompt-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const togglePromptBtn = document.getElementById('toggle-prompt-btn');
+        const mockupStudio = document.getElementById('mockup-studio');
+        const mockupDisplay = document.getElementById('mockup-display');
+        const gallerySection = document.getElementById('gallery-section');
+        const galleryGrid = document.getElementById('gallery-grid');
+        const savePromptBtn = document.getElementById('save-prompt-btn');
+        const generateVariationsBtn = document.getElementById('generate-variations-btn');
+        const variationsCard = document.getElementById('variations-card');
+        const variationsText = document.getElementById('variations-text');
+        const copyVariationsBtn = document.getElementById('copy-variations-btn');
+        const negativePromptText = document.getElementById('negative-prompt-text');
+        const videoScriptText = document.getElementById('video-script-text');
+        const copyVideoScriptBtn = document.getElementById('copy-video-script-btn');
+        const sunoScriptText = document.getElementById('suno-script-text');
+        const copySunoScriptBtn = document.getElementById('copy-suno-script-btn');
+        const marketingText = document.getElementById('marketing-text');
+        const copyMarketingBtn = document.getElementById('copy-marketing-btn');
+        const songLengthSelect = document.getElementById('song-length-select');
+        const sunoGenreInput = document.getElementById('suno-genre-input');
+        const sunoStyleInput = document.getElementById('suno-style-input');
+        const weirdnessRange = document.getElementById('weirdness-range');
+        const styleInfluenceRange = document.getElementById('style-influence-range');
+        const lyricInfluenceRange = document.getElementById('lyric-influence-range');
+        const audioInfluenceRange = document.getElementById('audio-influence-range');
+        const weirdnessValue = document.getElementById('weirdness-value');
+        const styleInfluenceValue = document.getElementById('style-influence-value');
+        const lyricInfluenceValue = document.getElementById('lyric-influence-value');
+        const audioInfluenceValue = document.getElementById('audio-influence-value');
+        const toggleHistoryBtn = document.getElementById('toggle-history-btn');
+        const promptHistorySection = document.getElementById('prompt-history-section');
+        const promptHistoryList = document.getElementById('prompt-history-list');
+        const historyChevron = document.getElementById('history-chevron');
+
+        // --- Initialization ---
+        async function init() {
+            renderStyleFamilyButtons();
+            renderPresetButtons();
+            lucide.createIcons();
+            renderFields();
+            setupEventListeners();
+            syncApiKeyUi();
+            syncSunoControls();
+            loadPromptHistory();
+
+            if (!auth) {
+                gallerySection.classList.add('hidden');
+                return;
+            }
+            
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.warn('Auth unavailable:', error);
+                gallerySection.classList.add('hidden');
+                return;
+            }
+            
+            onAuthStateChanged(auth, (u) => {
+                user = u;
+                if (u) loadGallery();
+            });
+        }
+
+
+        function syncApiKeyUi() {
+            if (!apiKeyInput || !apiKeyStatus) return;
+            apiKeyInput.value = apiKey;
+            apiKeyStatus.textContent = apiKey
+                ? 'API key saved. Image generation is ready.'
+                : 'Paste your Gemini API key to enable image generation.';
+        }
+
+        async function copyText(text, button = null, successLabel = 'Copied!') {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+
+            if (button) {
+                const original = button.innerHTML;
+                button.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> ${successLabel}`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    button.innerHTML = original;
+                    lucide.createIcons();
+                }, 1400);
+            }
+        }
+        function constructVariationPrompts(basePrompt) {
+            const identityRule = 'For all 3 variations, keep the same character identity, gender, ethnicity, facial structure, and overall subject essence.';
+            return [
+                `Variation 1: ${identityRule} Create a softer atmospheric version with subtle compositional changes, alternate environment emphasis, and refined symbolic layering while preserving the same surreal fusion style. Base prompt: ${basePrompt}`,
+                `Variation 2: ${identityRule} Create a more cinematic version with stronger environmental immersion, deeper atmosphere, and a more dramatic silhouette blend while preserving the same surreal fusion style. Base prompt: ${basePrompt}`,
+                `Variation 3: ${identityRule} Create a richer fine-art version with alternate color emphasis, evolved atmospheric details, and a slightly different visual motif balance while preserving the same surreal fusion style. Base prompt: ${basePrompt}`
+            ].join('\n\n');
+        }
+
+        function renderPromptHistory() {
+            if (!promptHistoryList) return;
+            if (!promptHistory.length) {
+                promptHistoryList.innerHTML = '<p class="text-xs text-zinc-500">No saved prompts yet.</p>';
+                return;
+            }
+
+            promptHistoryList.innerHTML = promptHistory.map((item, index) => `
+                <div class="p-3 rounded-xl bg-zinc-900 border border-zinc-800">
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <span class="text-[10px] uppercase tracking-widest text-amber-500 font-bold">Saved Prompt ${promptHistory.length - index}</span>
+                        <button class="history-copy-btn text-[10px] font-bold text-zinc-400 hover:text-white flex items-center gap-1" data-history-index="${index}">
+                            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                        </button>
+                    </div>
+                    <p class="text-xs text-zinc-400 italic leading-relaxed whitespace-pre-line">"${item.prompt}"</p>
+                </div>
+            `).join('');
+
+            promptHistoryList.querySelectorAll('.history-copy-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const idx = Number(e.currentTarget.getAttribute('data-history-index'));
+                    const entry = promptHistory[idx];
+                    if (!entry) return;
+                    await copyText(entry.prompt, e.currentTarget, 'Copied');
+                });
+            });
+            lucide.createIcons();
+        }
+
+        function loadPromptHistory() {
+            try {
+                const raw = localStorage.getItem('blendedPromptHistory');
+                promptHistory = raw ? JSON.parse(raw) : [];
+            } catch (error) {
+                promptHistory = [];
+            }
+            renderPromptHistory();
+        }
+
+        function saveCurrentPromptToHistory() {
+            if (!generatedPrompt) return;
+            const entry = {
+                prompt: generatedPrompt,
+                negative: generatedNegativePrompt,
+                createdAt: new Date().toISOString()
+            };
+            promptHistory = [entry, ...promptHistory.filter(item => item.prompt !== generatedPrompt)].slice(0, 20);
+            try {
+                localStorage.setItem('blendedPromptHistory', JSON.stringify(promptHistory));
+            } catch (error) {
+                // file:// or storage blocking
+            }
+            renderPromptHistory();
+        }
+
+        const STYLE_FAMILIES = ["All", "Butterfly Dissolve", "Silhouette Landscape", "Transparent Ocean Face", "Fantasy Nature Fusion", "Symbolic Color Collage"];
+
+        function getFilteredProfiles() {
+            if (activeStyleFamily === "All") return AESTHETIC_PROFILES;
+            return AESTHETIC_PROFILES.filter(profile => profile.family === activeStyleFamily);
+        }
+
+        function renderStyleFamilyButtons() {
+            if (!styleFamilyButtons) return;
+            styleFamilyButtons.innerHTML = STYLE_FAMILIES.map(family => `
+                <button type="button" class="style-family-btn shrink-0 px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all ${activeStyleFamily === family ? 'bg-amber-500 text-black border-amber-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}" data-family="${family}">
+                    ${family}
+                </button>
+            `).join('');
+        }
+
+        // --- Core Functions ---
+        function applyPreset(profile) {
+            formData.custom_text = profile.vibe || "";
+            FIELDS.forEach(f => {
+                if (f.key === 'custom_text') return;
+                if (profile[f.key]) {
+                    formData[f.key] = f.type === 'select' ? profile[f.key] : [...profile[f.key]];
+                } else {
+                    formData[f.key] = f.type === 'multiselect' ? [] : '';
+                }
+            });
+            renderFields();
+        }
+
+        function renderPresetButtons() {
+            if (!presetButtons) return;
+            const filteredProfiles = getFilteredProfiles();
+            presetButtons.innerHTML = filteredProfiles.map((profile) => `
+                <button type="button" class="preset-btn shrink-0 px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-800 transition-all" data-preset-name="${profile.name}">
+                    ${profile.name}
+                </button>
+            `).join('');
+        }
+
+        function renderFields() {
+            const fieldsToRender = FIELDS.filter(f => CATEGORIES[currentTab].includes(f.key));
+            fieldsContainer.innerHTML = '';
+            
+            fieldsToRender.forEach(field => {
+                const div = document.createElement('div');
+                div.className = "mb-6 animate-in fade-in slide-in-from-bottom-2";
+                const customKey = `custom_${field.key}`;
+                const customInputHtml = field.type !== 'text' ? `
+                    <div class="mt-3">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2">Custom ${field.label}</label>
+                        <input type="text" value="${formData[customKey] || ''}" placeholder="Add your own ${field.label.toLowerCase()}"
+                            class="custom-field-input w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-zinc-300 outline-none focus:ring-2 focus:ring-amber-500/20 hover:bg-zinc-950 transition-all"
+                            data-custom-key="${customKey}">
+                    </div>` : '';
+                
+                const isLocked = !!lockedFields[field.key];
+                const label = `<div class="flex items-center justify-between gap-3 mb-2">
+                    <label class="flex items-center gap-2 text-sm font-semibold text-zinc-400">
+                        <i data-lucide="${field.icon}" class="w-4 h-4"></i> ${field.label}
+                    </label>
+                    <button type="button" class="lock-btn inline-flex items-center gap-1 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all ${isLocked ? 'bg-amber-500 text-black border-amber-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}" data-lock-key="${field.key}">
+                        <i data-lucide="${isLocked ? 'lock' : 'unlock'}" class="w-3 h-3"></i> ${isLocked ? 'Locked' : 'Lock'}
+                    </button>
+                </div>`;
+
+                if (field.type === 'text') {
+                    div.innerHTML = `${label}
+                        <input type="text" placeholder="${field.placeholder}" value="${formData[field.key]}" 
+                            class="field-input w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-200 outline-none focus:ring-2 focus:ring-amber-500/20 hover:bg-zinc-800 transition-all">`;
+                    const input = div.querySelector('input');
+                    input.addEventListener('input', (e) => formData[field.key] = e.target.value);
+                } 
+                else if (field.type === 'select') {
+                    const options = field.options.map(opt => `<option value="${opt}" ${formData[field.key] === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                    div.innerHTML = `${label}
+                        <select class="field-select w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-200 outline-none focus:ring-2 focus:ring-amber-500/20 hover:bg-zinc-800 transition-all">
+                            ${options}
+                        </select>${customInputHtml}`;
+                    const select = div.querySelector('select');
+                    select.addEventListener('change', (e) => formData[field.key] = e.target.value);
+                }
+                else if (field.type === 'multiselect') {
+                    const selectedText = formData[field.key].length > 0 ? formData[field.key].join(', ') : 'None';
+                    div.innerHTML = `${label}
+                        <div class="relative dropdown-container">
+                            <button type="button" class="dropdown-toggle w-full flex items-center justify-between px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-all text-left">
+                                <span class="truncate text-zinc-200">${selectedText}</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-500"></i>
+                            </button>
+                            <div class="dropdown-content custom-scrollbar">
+                                ${field.options.map(opt => `
+                                    <button type="button" data-value="${opt}" class="dropdown-item w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-800 text-sm text-zinc-300 transition-colors">
+                                        ${opt}
+                                        <i data-lucide="check" class="w-4 h-4 text-amber-400 ${formData[field.key].includes(opt) ? '' : 'hidden'}"></i>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>${customInputHtml}`;
+                    
+                    const toggle = div.querySelector('.dropdown-toggle');
+                    const content = div.querySelector('.dropdown-content');
+                    toggle.addEventListener('click', () => {
+                        document.querySelectorAll('.dropdown-content').forEach(d => d !== content && d.classList.remove('show'));
+                        content.classList.toggle('show');
+                    });
+
+                    div.querySelectorAll('.dropdown-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const val = item.getAttribute('data-value');
+                            if (val === 'None') {
+                                formData[field.key] = [];
+                                renderFields();
+                                return;
+                            }
+                            if (formData[field.key].includes(val)) {
+                                formData[field.key] = formData[field.key].filter(v => v !== val);
+                            } else {
+                                formData[field.key] = formData[field.key].filter(v => v !== 'None');
+                                formData[field.key].push(val);
+                            }
+                            renderFields();
+                        });
+                    });
+                }
+
+                const customInput = div.querySelector('.custom-field-input');
+                if (customInput) {
+                    customInput.addEventListener('input', (e) => {
+                        formData[e.target.getAttribute('data-custom-key')] = e.target.value;
+                    });
+                }
+
+                const lockBtn = div.querySelector('.lock-btn');
+                if (lockBtn) {
+                    lockBtn.addEventListener('click', () => {
+                        const key = lockBtn.getAttribute('data-lock-key');
+                        lockedFields[key] = !lockedFields[key];
+                        renderFields();
+                    });
+                }
+
+                fieldsContainer.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+
+        function syncSunoControls() {
+            if (weirdnessValue && weirdnessRange) weirdnessValue.textContent = `${weirdnessRange.value}%`;
+            if (styleInfluenceValue && styleInfluenceRange) styleInfluenceValue.textContent = `${styleInfluenceRange.value}%`;
+            if (lyricInfluenceValue && lyricInfluenceRange) lyricInfluenceValue.textContent = `${lyricInfluenceRange.value}%`;
+            if (audioInfluenceValue && audioInfluenceRange) audioInfluenceValue.textContent = `${audioInfluenceRange.value}%`;
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-white'));
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-zinc-500'));
+                    btn.classList.add('tab-active', 'text-white');
+                    btn.classList.remove('text-zinc-500');
+                    currentTab = btn.getAttribute('data-tab');
+                    renderFields();
+                });
+            });
+
+            if (saveApiKeyBtn && apiKeyInput) {
+                saveApiKeyBtn.addEventListener('click', () => {
+                    apiKey = apiKeyInput.value.trim();
+                    try { localStorage.setItem('geminiApiKey', apiKey); } catch (e) { /* storage unavailable on file:// */ }
+                    syncApiKeyUi();
+                });
+
+                apiKeyInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveApiKeyBtn.click();
+                    }
+                });
+            }
+
+            document.querySelectorAll('.style-family-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeStyleFamily = btn.getAttribute('data-family') || 'All';
+                    renderStyleFamilyButtons();
+                    renderPresetButtons();
+                    setupEventListeners();
+                    lucide.createIcons();
+                });
+            });
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const profile = AESTHETIC_PROFILES.find(profile => profile.name === btn.getAttribute('data-preset-name'));
+                    if (!profile) return;
+                    applyPreset(profile);
+                });
+            });
+
+            // Randomize
+            randomizeBtn.addEventListener('click', () => {
+                const randomPool = getFilteredProfiles();
+                const profile = randomPool[Math.floor(Math.random() * randomPool.length)] || AESTHETIC_PROFILES[Math.floor(Math.random() * AESTHETIC_PROFILES.length)];
+                if (!lockedFields.custom_text) formData.custom_text = profile.vibe;
+                FIELDS.forEach(f => {
+                    if (f.key === 'custom_text' || lockedFields[f.key]) return;
+                    if (profile[f.key]) {
+                        formData[f.key] = f.type === 'select' ? profile[f.key] : [...profile[f.key]];
+                    } else if (f.options && f.options.length > 0) {
+                        const usableOptions = f.options.filter(opt => opt !== 'None');
+                        const randomOpt = usableOptions[Math.floor(Math.random() * usableOptions.length)];
+                        formData[f.key] = f.type === 'select' ? randomOpt : [randomOpt];
+                    }
+                });
+                renderFields();
+            });
+
+            // Generate
+            generateBtn.addEventListener('click', handleGenerate);
+
+            // Download
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => downloadImage(generatedImageUrl));
+            }
+
+            // Prompt toggle
+            if (togglePromptBtn) {
+                togglePromptBtn.addEventListener('click', () => {
+                    promptCard.classList.toggle('hidden');
+                });
+            }
+
+            // Copy prompt
+            if (copyPromptBtn) {
+                copyPromptBtn.addEventListener('click', async () => {
+                    const text = promptText.innerText.replace(/"/g, '');
+                    await copyText(text, copyPromptBtn, 'Prompt Copied');
+                });
+            }
+
+            // Copy negative prompt
+            if (copyNegativePromptBtn) {
+                copyNegativePromptBtn.addEventListener('click', async () => {
+                    const text = negativePromptText.innerText.replace(/"/g, '');
+                    await copyText(text, copyNegativePromptBtn, 'Negative Copied');
+                });
+            }
+
+            if (savePromptBtn) {
+                savePromptBtn.addEventListener('click', async () => {
+                    saveCurrentPromptToHistory();
+                    await copyText(generatedPrompt || '', savePromptBtn, 'Saved');
+                });
+            }
+
+            if (generateVariationsBtn) {
+                generateVariationsBtn.addEventListener('click', () => {
+                    if (!generatedPrompt) return;
+                    generatedVariations = constructVariationPrompts(generatedPrompt);
+                    if (variationsText) variationsText.innerText = generatedVariations;
+                    if (variationsCard) variationsCard.classList.remove('hidden');
+                });
+            }
+
+            if (copyVariationsBtn) {
+                copyVariationsBtn.addEventListener('click', async () => {
+                    const text = variationsText.innerText.replace(/"/g, '');
+                    await copyText(text, copyVariationsBtn, 'Variations Copied');
+                });
+            }
+
+            if (toggleHistoryBtn) {
+                toggleHistoryBtn.addEventListener('click', () => {
+                    promptHistorySection.classList.toggle('hidden');
+                    historyChevron.style.transform = promptHistorySection.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                });
+            }
+
+
+            if (copyVideoScriptBtn) {
+                copyVideoScriptBtn.addEventListener('click', async () => {
+                    const text = (videoScriptText?.innerText || '').replace(/"/g, '');
+                    await copyText(text, copyVideoScriptBtn, 'Video Copied');
+                });
+            }
+
+            if (copySunoScriptBtn) {
+                copySunoScriptBtn.addEventListener('click', async () => {
+                    const text = (sunoScriptText?.innerText || '').replace(/"/g, '');
+                    await copyText(text, copySunoScriptBtn, 'Suno Copied');
+                });
+            }
+
+            if (copyMarketingBtn) {
+                copyMarketingBtn.addEventListener('click', async () => {
+                    const text = (marketingText?.innerText || '').replace(/"/g, '');
+                    await copyText(text, copyMarketingBtn, 'Marketing Copied');
+                });
+            }
+
+            [weirdnessRange, styleInfluenceRange, lyricInfluenceRange, audioInfluenceRange].forEach(input => {
+                if (!input) return;
+                input.addEventListener('input', () => {
+                    syncSunoControls();
+                    if (generatedPrompt && sunoScriptText) {
+                        generatedSunoScript = constructSunoScript(generatedPrompt);
+                        sunoScriptText.innerText = generatedSunoScript;
+                    }
+                });
+            });
+
+            [songLengthSelect, sunoGenreInput, sunoStyleInput].forEach(input => {
+                if (!input) return;
+                input.addEventListener('input', () => {
+                    if (generatedPrompt && sunoScriptText) {
+                        generatedSunoScript = constructSunoScript(generatedPrompt);
+                        sunoScriptText.innerText = generatedSunoScript;
+                    }
+                });
+            });
+
+            // Mockup tabs
+            document.querySelectorAll('.mockup-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mockup-tab').forEach(b => {
+                        b.classList.remove('bg-white', 'text-black', 'shadow-lg', 'scale-105');
+                        b.classList.add('bg-zinc-900', 'text-zinc-500');
+                    });
+                    btn.classList.add('bg-white', 'text-black', 'shadow-lg', 'scale-105');
+                    btn.classList.remove('bg-zinc-900', 'text-zinc-500');
+                    renderMockup(btn.getAttribute('data-mockup'), generatedImageUrl);
+                });
+            });
+
+            // Global click to close dropdowns
+            window.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown-container')) {
+                    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+                }
+            });
+        }
+
+        function constructPrompt() {
+            const {
+                custom_text,
+                subject_type,
+                ethnicity,
+                mood,
+                camera,
+                fusion_theme,
+                main_environment,
+                atmospheric_elements,
+                visual_motif,
+                blend_behavior,
+                fusion_placement,
+                integration_strength,
+                blend_intensity,
+                color_story,
+                art_finish,
+                lighting
+            } = formData;
+
+            const clean = (value) => {
+                if (Array.isArray(value)) return value.filter(v => v && v !== 'None');
+                return value && value !== 'None' ? value : '';
+            };
+
+            const subjectKinds = clean(subject_type) || 'surreal portrait subject';
+            const ethnicities = clean(ethnicity);
+            const expression = clean(mood) || 'striking';
+            const angle = clean(camera) || '85mm portrait';
+            const themes = clean(fusion_theme);
+            const environments = clean(main_environment);
+            const atmos = clean(atmospheric_elements);
+            const motifs = clean(visual_motif);
+            const behaviors = clean(blend_behavior);
+            const placement = clean(fusion_placement) || 'face and upper form';
+            const strength = clean(integration_strength) || 'heavy blend';
+            const intensity = clean(blend_intensity) || 'heavy';
+            const colors = clean(color_story);
+            const finishes = clean(art_finish);
+            const light = clean(lighting);
+            const concept = custom_text ? `concept: ${custom_text}. ` : '';
+
+            const customDirections = FIELDS
+                .filter(field => field.type !== 'text')
+                .map(field => ({ label: field.label, value: (formData[`custom_${field.key}`] || '').trim() }))
+                .filter(item => item.value)
+                .map(item => `${item.label}: ${item.value}`);
+
+            const subjectLine = `Create an ultra-high resolution surreal blended portrait in a fine-art dreamscape style. ${concept}Subject: ${subjectKinds}${ethnicities.length ? ` with ${ethnicities.join(' and ')} features` : ''}, with a ${expression} expression, shown in ${angle}.`;
+            const fusionLine = `${themes.length ? `Fusion theme: ${themes.join(', ')}.` : ''} ${environments.length ? `Main environment: ${environments.join(', ')}.` : ''} The subject must be seamlessly fused with the environment through ${placement}, using ${strength.toLowerCase()} integration.`;
+            const behaviorLine = `${behaviors.length ? `Use ${behaviors.join(', ')} as the primary blend behavior.` : ''} Push the blend intensity to ${String(intensity).toLowerCase()}, making the landscape, atmosphere, and symbolic elements feel embedded into the anatomy and silhouette rather than placed on top.`;
+            const motifLine = `${motifs.length ? `Visual motif: ${motifs.join(', ')}.` : ''} ${atmos.length ? `Atmospheric elements: ${atmos.join(', ')}.` : ''}`;
+            const finishLine = `${colors.length ? `Color story: ${colors.join(', ')}.` : ''} ${light.length ? `Lighting: ${light.join(', ')}.` : ''} ${finishes.length ? `Art finish: ${finishes.join(', ')}.` : ''}`;
+            const customLine = customDirections.length ? `Custom direction: ${customDirections.join('; ')}.` : '';
+
+            return `${subjectLine} ${fusionLine} ${behaviorLine} ${motifLine} ${finishLine} ${customLine} The final image should feel like surreal double exposure, silhouette fusion, and symbolic visual storytelling with luminous detail, soft transitions, contour-following merges, dreamy atmosphere, and a cohesive fine-art fantasy finish.`.trim().replace(/\s+/g, ' ');
+        }
+
+
+        function humanizeLabel(value) {
+            if (Array.isArray(value)) return value.filter(v => v && v !== 'None').join(', ');
+            return value && value !== 'None' ? value : '';
+        }
+
+        function getCoreCreativeSummary() {
+            const concept = (formData.custom_text || 'luxury surreal blended portrait').trim();
+            const theme = humanizeLabel(formData.fusion_theme) || 'surreal fusion';
+            const environment = humanizeLabel(formData.main_environment) || 'dreamlike environment';
+            const mood = humanizeLabel(formData.mood) || 'cinematic';
+            const color = humanizeLabel(formData.color_story) || 'premium cinematic color';
+            const motif = humanizeLabel(formData.visual_motif) || 'symbolic visual motif';
+            const atmosphere = humanizeLabel(formData.atmospheric_elements) || 'soft atmospheric details';
+            const subject = humanizeLabel(formData.subject_type) || 'fine-art portrait subject';
+            return { concept, theme, environment, mood, color, motif, atmosphere, subject };
+        }
+
+        function constructVideoScript(basePrompt) {
+            const { concept, theme, environment, mood, color, motif, atmosphere, subject } = getCoreCreativeSummary();
+            return [
+                `HOOK: Stop scrolling — this ${concept} concept turns one idea into a luxury AI image people actually remember.`,
+                `SCENE 1 (0-5s): Open with the strongest reveal of the ${subject}. Overlay text: "${concept}".`,
+                `SCENE 2 (5-12s): Show the ${theme} blending through the subject with ${atmosphere}. Overlay text: "Blended, cinematic, unforgettable."`,
+                `SCENE 3 (12-20s): Cut to the ${environment} details and the ${motif}. Overlay text: "${color} energy • ${mood} mood".`,
+                `SCENE 4 (20-30s): Show the final luxury image and a close crop. Voiceover: "If you want premium AI visuals without guessing, this generator does the heavy lifting."`,
+                `CTA: Visit my webpage, grab the generator, and create your own high-end blended images today.`,
+                `CAPTION DIRECTION: Focus on transformation, premium visuals, and easy prompt creation from one generator.`,
+                `BASE PROMPT REFERENCE: ${basePrompt}`
+            ].join('\n\n');
+        }
+
+        function constructSunoScript(basePrompt) {
+            const { concept, theme, environment } = getCoreCreativeSummary();
+            const lengthChoice = songLengthSelect?.value || 'jingle';
+            const genreFreedom = (sunoGenreInput?.value || '').trim() || 'open';
+            const styleFreedom = (sunoStyleInput?.value || '').trim() || 'open';
+            const weirdness = weirdnessRange?.value || '15';
+            const styleInfluence = styleInfluenceRange?.value || '90';
+            const lyricInfluence = lyricInfluenceRange?.value || '70';
+            const audioInfluence = audioInfluenceRange?.value || '40';
+
+            const hookLine = lengthChoice === '1-minute'
+                ? `Hook: ${concept} — premium visuals, instant downloads, come shop the glow-up.`
+                : lengthChoice === '30-second'
+                    ? `Hook: ${concept} — premium visuals, instant downloads, tap in and glow up now.`
+                    : `Hook: ${concept} — premium visuals, instant glow-up.`;
+
+            return [
+                hookLine,
+                `Genre: ${genreFreedom}`,
+                `Style: ${styleFreedom}`,
+                `Theme: ${theme}`,
+                `Environment: ${environment}`,
+                `Weirdness: ${weirdness}%`,
+                `Style Influence: ${styleInfluence}%`,
+                `Lyric Influence: ${lyricInfluence}%`,
+                `Audio Influence: ${audioInfluence}%`
+            ].join('\\n');
+        }
+
+        function constructMarketingPack(basePrompt) {
+            const { concept, theme, environment, mood, color, motif, atmosphere, subject } = getCoreCreativeSummary();
+            const shortTag = concept.length > 55 ? concept.slice(0, 55).trim() + '…' : concept;
+            const hashtagSet = ['#AIPromptGenerator', '#AIDigitalProducts', '#LuxuryAIArt', '#PromptEngineering', '#ContentCreatorTools', '#DigitalProductSeller', '#AIImages', '#SurrealPortraits', '#CreativeBusiness', '#GlamorousGrammyGlowUp'].join(' ');
+            return [
+                `SEO TITLE: ${concept} AI Prompt Generator for Luxury Blended Images`,
+                `SEO DESCRIPTION: Create premium surreal blended portraits with guided prompts, video ideas, Suno song prompts, and built-in marketing copy that helps creators drive traffic and sales.`,
+                ``,
+                `CAPTION IDEAS:`,
+                `1. I stopped guessing and built the exact generator I wanted for premium blended AI images. ${shortTag} is giving cinematic, surreal, high-end magic.`,
+                `2. This generator helps you create luxury blended visuals, video scripts, and promo copy without staring at a blank screen.`,
+                `3. If your AI art needs more story, mood, and premium polish, this is the tool that fixes that fast.`,
+                ``,
+                `CTA OPTIONS:`,
+                `• Visit my webpage to grab the generator now.`,
+                `• Tap the link and start creating premium visuals today.`,
+                `• Shop the generator and turn one idea into a full campaign.`,
+                ``,
+                `EMAIL PROMO:`,
+                `Subject: Your next luxury AI visual starts here`,
+                `Body: I created a premium generator that helps you build ${theme} visuals with ${environment}, ${atmosphere}, and a polished marketing angle. If you want better-looking AI content and faster content creation, visit my webpage and grab it today.`,
+                ``,
+                `PINTEREST:`,
+                `Title: ${concept} Prompt Generator for Luxury Blended AI Art`,
+                `Description: Create ${mood} ${subject} visuals with ${theme}, ${motif}, and ${environment}. Includes prompt ideas, music promo prompts, and marketing copy to help creators sell smarter.`,
+                ``,
+                `TIKTOK:`,
+                `Caption: POV: you finally found the generator that makes blended AI art look expensive. ${shortTag}`,
+                `CTA: Link in bio to shop.`,
+                ``,
+                `FACEBOOK:`,
+                `Post: I built a luxury AI prompt generator for creators who want blended images that feel cinematic, story-driven, and high-end. It also gives you promo ideas so you can actually market what you make. Visit my webpage to check it out.`,
+                ``,
+                `INSTAGRAM:`,
+                `Caption: Luxury blended visuals, dreamy story-driven prompts, and built-in marketing help? Yes please. ${shortTag} was made for creators who want premium results without the guesswork.`,
+                ``,
+                `YOUTUBE:`,
+                `Title: Create Luxury Blended AI Images That Actually Sell`,
+                `Description: In this video I’m showing how I use my prompt generator to create ${theme} visuals with ${environment}, ${color}, and ${atmosphere}. Grab the generator from my webpage if you want premium AI content faster.`,
+                ``,
+                `AD COPY:`,
+                `Headline: Create Premium AI Images Fast`,
+                `Primary Text: Turn one concept into a luxury blended visual campaign with prompts, promo scripts, and marketing copy built in. Designed for creators who want high-end results and more clicks.`,
+                `Hashtags: ${hashtagSet}`,
+                ``,
+                `REFERENCE PROMPT: ${basePrompt}`
+            ].join('\n');
+        }
+
+        function constructNegativePrompt() {
+            return `no sticker effect, no pasted-on elements, no costume styling, no harsh cut lines, no flat collage edges, no broken anatomy, no extra limbs, no random jewelry, no tiaras, no necklaces, no text, no watermark, no muddy blending, no low detail, no flat cut-and-paste composition`;
+        }
+
+        async function handleGenerate() {
+            const errorEl = document.getElementById('error-message');
+            errorEl.classList.add('hidden');
+
+            const prompt = constructPrompt();
+            const negativePrompt = constructNegativePrompt();
+            const videoScript = constructVideoScript(prompt);
+            const sunoScript = constructSunoScript(prompt);
+            const marketingPack = constructMarketingPack(prompt);
+            generatedPrompt = prompt;
+            generatedNegativePrompt = negativePrompt;
+            generatedVideoScript = videoScript;
+            generatedSunoScript = sunoScript;
+            generatedMarketingPack = marketingPack;
+            generatedVariations = "";
+            promptText.innerText = `"${prompt}"`;
+            negativePromptText.innerText = `"${negativePrompt}"`;
+            if (videoScriptText) videoScriptText.innerText = videoScript;
+            if (sunoScriptText) sunoScriptText.innerText = sunoScript;
+            if (marketingText) marketingText.innerText = marketingPack;
+            if (variationsText) variationsText.innerText = '';
+            if (variationsCard) variationsCard.classList.add('hidden');
+            promptCard.classList.remove('hidden');
+        }
+
+        function renderMockup(type, imageUrl) {
+            let html = '';
+            if (type === 'livingroom') {
+                html = `
+                    <div class="relative w-full h-full bg-[#f8f7f4] overflow-hidden flex flex-col justify-end">
+                        <div class="absolute top-0 inset-x-0 bottom-[35%] overflow-hidden">
+                            <img src="${imageUrl}" class="w-full h-full object-cover brightness-95 contrast-105" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/5 pointer-events-none"></div>
+                        </div>
+                        <div class="absolute bottom-0 w-full h-[40%] bg-gradient-to-t from-[#3d2b1f] to-[#5a402e] shadow-2xl z-0" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0,0,0,0.15) 60px, rgba(0,0,0,0.15) 62px)"></div>
+                        <div class="relative w-full h-[30%] z-20 px-10 flex justify-center items-end pb-4">
+                           <div class="w-[85%] h-full bg-[#cbd5e1] rounded-b-[60px] rounded-t-[100px] shadow-[0_40px_80px_rgba(0,0,0,0.5)] relative">
+                              <div class="absolute -top-6 inset-x-4 h-12 bg-[#b1bdcd] rounded-full opacity-80"></div>
+                           </div>
+                        </div>
+                        <div class="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-white/15 to-transparent blur-3xl pointer-events-none z-30"></div>
+                    </div>`;
+            } else if (type === 'gallery') {
+                html = `
+                    <div class="relative w-full h-full bg-[#f3f4f6]">
+                        <div class="absolute bottom-0 w-full h-[35%] bg-gradient-to-b from-[#d1d5db] to-[#9ca3af]"></div>
+                        <div class="absolute top-4 inset-x-20 h-1 bg-zinc-800 rounded-full flex justify-around items-center px-20">
+                            <div class="relative w-4 h-4 bg-zinc-700 rounded-full"><div class="absolute top-full left-1/2 -translate-x-1/2 w-32 h-64 bg-white/25 blur-3xl rounded-full"></div></div>
+                            <div class="relative w-4 h-4 bg-zinc-700 rounded-full"><div class="absolute top-full left-1/2 -translate-x-1/2 w-32 h-64 bg-white/25 blur-3xl rounded-full"></div></div>
+                            <div class="relative w-4 h-4 bg-zinc-700 rounded-full"><div class="absolute top-full left-1/2 -translate-x-1/2 w-32 h-64 bg-white/25 blur-3xl rounded-full"></div></div>
+                        </div>
+                        <div class="relative z-10 w-[28%] aspect-[4/5] bg-black p-4 shadow-[0_50px_100px_rgba(0,0,0,0.5)] border-[12px] border-zinc-900">
+                          <img src="${imageUrl}" class="w-full h-full object-cover" />
+                        </div>
+                    </div>`;
+            } else if (type === 'tshirt') {
+                html = `
+                    <div class="relative w-full h-full bg-[#0a0a0a] flex items-center justify-center">
+                        <div class="relative w-[55%] aspect-square flex items-center justify-center">
+                            <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_40px_60px_rgba(255,255,255,0.08)]">
+                              <path fill="#ffffff" d="M100 20c-15 0-25 10-25 10s-5-10-20-10c-15 0-35 8-40 25s-10 50-10 50l20 5 5-20 10 90h120l10-90 5 20 20-5s-5-33-10-50-25-25-40-25c-15 0-20 10-20 10s-10-10-25-10z" />
+                            </svg>
+                            <div class="absolute top-[38%] w-[22%] aspect-[4/5] overflow-hidden rounded-sm opacity-95 mix-blend-multiply filter contrast-125 saturate-110">
+                              <img src="${imageUrl}" class="w-full h-full object-cover" />
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'canvas') {
+                html = `
+                    <div class="relative w-full h-full bg-[#050505] flex items-center justify-center">
+                        <div class="relative w-[30%] aspect-[4/5]" style="perspective: 1200px">
+                          <div class="relative w-full h-full preserve-3d transition-transform duration-700 hover:rotate-y-12">
+                            <div class="absolute top-0 right-0 w-10 h-full bg-zinc-800 origin-left transform rotate-y-90"></div>
+                            <div class="absolute bottom-0 left-0 w-full h-10 bg-zinc-900 origin-top transform rotate-x-90"></div>
+                            <div class="relative w-full h-full bg-zinc-100 shadow-[0_50px_100px_rgba(0,0,0,0.8)]">
+                              <img src="${imageUrl}" class="w-full h-full object-cover" />
+                            </div>
+                          </div>
+                        </div>
+                    </div>`;
+            }
+            mockupDisplay.innerHTML = html;
+        }
+
+        async function loadGallery() {
+            if (!db || !user) return;
+            const q = collection(db, 'artifacts', appId, 'users', user.uid, 'gallery');
+            onSnapshot(q, (snapshot) => {
+                gallerySection.classList.toggle('hidden', snapshot.empty);
+                galleryGrid.innerHTML = '';
+                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis());
+                
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "group relative bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden hover:border-amber-500/50 transition-all shadow-xl";
+                    div.innerHTML = `
+                        <div class="aspect-[4/5] overflow-hidden">
+                            <img src="${item.imageUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        </div>
+                        <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col">
+                            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                <span class="text-amber-500 text-[10px] font-black uppercase tracking-widest block mb-2">${item.vibe}</span>
+                                <p class="text-xs text-zinc-300 italic leading-relaxed">"${item.prompt}"</p>
+                            </div>
+                            <div class="pt-4 border-t border-zinc-800 flex items-center justify-between mt-4">
+                                <div class="flex gap-2">
+                                    <button class="gallery-dl p-2 bg-zinc-800 hover:bg-white hover:text-black rounded-lg transition-colors"><i data-lucide="download" class="w-4 h-4"></i></button>
+                                    <button class="gallery-copy p-2 bg-zinc-800 hover:bg-white hover:text-black rounded-lg transition-colors"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                </div>
+                                <button class="gallery-del p-2 text-zinc-500 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>`;
+                    
+                    div.querySelector('.gallery-dl').addEventListener('click', () => downloadImage(item.imageUrl));
+                    div.querySelector('.gallery-copy').addEventListener('click', async (e) => {
+                        await copyText(item.prompt, e.currentTarget, 'Copied');
+                    });
+                    div.querySelector('.gallery-del').addEventListener('click', async () => {
+                        if (!db || !user) return;
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'gallery', item.id));
+                    });
+
+                    galleryGrid.appendChild(div);
+                });
+                lucide.createIcons();
+            });
+        }
+
+        async function compressImage(base64Str) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = base64Str;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxWidth = 1024;
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            });
+        }
+
+        async function downloadImage(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `blended-portrait-${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        }
+
+        // --- Start App ---
+        init();
+    </script>
+    <footer class="max-w-6xl mx-auto px-6 pb-10 text-center text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">All rights reserved by glamorousgrammyglowup</footer>
+</body>
+</html>
